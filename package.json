@@ -3,9 +3,9 @@
   "version": "2.0.0",
   "description": "erp os backend",
   "main": "server.js",
-  "packageManager": "yarn@4.1.1",
   "engines": {
-    "node": "20.17.0"
+    "node": "20.17.0",
+    "yarn": "1.22.22"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
