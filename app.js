@@ -137,7 +137,7 @@ app.use(
   require("./routes/Personnel/hr/permission/permission.routes")
 );
 // app.use("/user", limiter, require("./routes/user/user.routes"));
-app.use("/v1/role", require("./routes/personnel/hr/role/role.routes"));
+app.use("/v1/role", require("./routes/Personnel/hr/role/role.routes"));
 app.use(
   "/v1/designation",
   require("./routes/Personnel/hr/designation/designation.routes")
