@@ -48,6 +48,7 @@ let allowedOrigins = [
   "http://192.168.1.176:3000",
   "http://192.168.1.176:5000",
   "https://erpasermpharma-b64f86e34423.herokuapp.com/",
+  "https://erpasermpharma.com/",
   "192.168.1.12"
 ];
 
@@ -82,6 +83,8 @@ app.use(
     },
   })
 );
+
+app.options('*', cors()); // Permet à toutes les routes de gérer les pré-requêtes
 
 // Serve JavaScript files with the correct MIME type
 app.use((req, res, next) => {
