@@ -47,6 +47,8 @@ let allowedOrigins = [
   "https://erp-os-frontend.vercel.app/",
   "http://192.168.1.176:3000",
   "http://192.168.1.176:5000",
+  "https://erpasermpharma-b64f86e34423.herokuapp.com/",
+  "192.168.1.12"
 ];
 
 // limit the number of requests from a single IP address
