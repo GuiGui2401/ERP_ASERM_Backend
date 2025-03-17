@@ -124,6 +124,8 @@ app.use(compression());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // morgan: log requests to console in dev environment
 app.use(morgan("dev"));
+
+
 app.use('/', router);
 // allows cors access from allowedOrigins array
 app.use(
@@ -142,7 +144,16 @@ app.use(
   })
 );
 
-app.options('*', cors()); // Permet à toutes les routes de gérer les pré-requêtes
+app.options('*', cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      let msg = "The CORS policy for this site does not allow access from the specified Origin.";
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+})); // Permet à toutes les routes de gérer les pré-requêtes
 
 // Serve JavaScript files with the correct MIME type
 app.use((req, res, next) => {
