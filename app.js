@@ -34,10 +34,66 @@ const getAuditLogs = require("./routes/AuditLog/auditlog.routes");
 const authRoutes = require('./routes/auth.routes');
 
 const reportingRoutes = require('./routes/Distribution/sale/reporting/reporting.routes');
-
+const multer = require('multer');
+const xlsx = require('xlsx');
+const path = require('path');
 /* variables */
 // express app instance
 const app = express();
+const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: function(req, file, cb) {
+    const filetypes = /xlsx|xls/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error("Seuls les fichiers Excel sont autorisés"));
+  }
+});
+
+// Endpoint pour uploader et parser le fichier Excel
+router.post('/api/upload-excel', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Aucun fichier n\'a été uploadé' });
+    }
+
+    // Lire le fichier Excel
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetNameList = workbook.SheetNames;
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNameList[0]]);
+
+
+    return res.status(200).json({
+      success: true,
+      message: 'Fichier traité avec succès',
+      data: data
+    });
+  } catch (error) {
+    console.error('Erreur lors du traitement du fichier:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Une erreur est survenue lors du traitement du fichier'
+    });
+  }
+});
+
+module.exports = router;
+
 
 // holds all the allowed origins for cors access
 let allowedOrigins = [
