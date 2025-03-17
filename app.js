@@ -126,7 +126,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("dev"));
 
 
-app.use('/', router);
+// app.use('/', router);
 // allows cors access from allowedOrigins array
 app.use(
   cors({
