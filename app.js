@@ -66,7 +66,7 @@ const upload = multer({
 });
 
 // Endpoint pour uploader et parser le fichier Excel
-router.post('/api/upload-excel', upload.single('file'), (req, res) => {
+router.post('/v1/upload-excel', upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'Aucun fichier n\'a été uploadé' });
@@ -124,6 +124,7 @@ app.use(compression());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // morgan: log requests to console in dev environment
 app.use(morgan("dev"));
+app.use('/', router);
 // allows cors access from allowedOrigins array
 app.use(
   cors({
