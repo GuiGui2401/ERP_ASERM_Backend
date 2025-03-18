@@ -37,6 +37,7 @@ const reportingRoutes = require('./routes/Distribution/sale/reporting/reporting.
 const multer = require('multer');
 const xlsx = require('xlsx');
 const path = require('path');
+
 /* variables */
 // express app instance
 const app = express();
@@ -68,7 +69,12 @@ const upload = multer({
 // Endpoint pour uploader et parser le fichier Excel
 router.post('/v1/upload-excel', upload.single('file'), (req, res) => {
   try {
+    console.log("Requête reçue !");
+    console.log("Headers :", req.headers);
+    console.log("Fichier reçu :", req.file);
+
     if (!req.file) {
+      console.log("Aucun fichier reçu!");
       return res.status(400).json({ success: false, message: 'Aucun fichier n\'a été uploadé' });
     }
 
@@ -125,6 +131,9 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // morgan: log requests to console in dev environment
 app.use(morgan("dev"));
 
+const uploadRoutes = require('./routes/uploadRoutes'); // Vérifie le chemin du fichier
+app.use('/v1', uploadRoutes);
+
 
 // app.use('/', router);
 // allows cors access from allowedOrigins array
@@ -144,16 +153,7 @@ app.use(
   })
 );
 
-app.options('*', cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      let msg = "The CORS policy for this site does not allow access from the specified Origin.";
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  }
-})); // Permet à toutes les routes de gérer les pré-requêtes
+app.options('*', cors());// Permet à toutes les routes de gérer les pré-requêtes
 
 // Serve JavaScript files with the correct MIME type
 app.use((req, res, next) => {
