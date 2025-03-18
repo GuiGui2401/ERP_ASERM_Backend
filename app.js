@@ -131,8 +131,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // morgan: log requests to console in dev environment
 app.use(morgan("dev"));
 
-const uploadRoutes = require('./routes/uploadRoutes'); // Vérifie le chemin du fichier
-app.use('/v1', uploadRoutes);
+
 
 
 // app.use('/', router);
