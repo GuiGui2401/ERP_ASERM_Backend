@@ -39,7 +39,7 @@ const upload = multer({
 
 // Endpoint pour uploader un fichier Excel/CSV et récupérer les données
 productCategoryRoutes.post(
-  "/upload-excel",
+  "/v1/upload-excel",
   authorize("createProductCategory"),
   upload.single("file"),
   async (req, res) => {
