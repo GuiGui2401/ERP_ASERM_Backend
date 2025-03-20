@@ -37,12 +37,17 @@ const reportingRoutes = require('./routes/Distribution/sale/reporting/reporting.
 const multer = require('multer');
 const xlsx = require('xlsx');
 const path = require('path');
+const fs = require('fs');
+const csv = require('csv-parser');
 
 /* variables */
 // express app instance
+
+
 const app = express();
 const router = express.Router();
 
+// Configuration du stockage des fichiers
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -52,22 +57,35 @@ const storage = multer.diskStorage({
   }
 });
 
+// Filtrage des fichiers acceptés (Excel et CSV)
 const upload = multer({
   storage: storage,
-  fileFilter: function(req, file, cb) {
-    const filetypes = /xlsx|xls/;
+  fileFilter: function (req, file, cb) {
+    const filetypes = /xlsx|xls|csv/;
     const mimetype = filetypes.test(file.mimetype);
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error("Seuls les fichiers Excel sont autorisés"));
+    cb(new Error("Seuls les fichiers Excel (.xls, .xlsx) ou CSV (.csv) sont autorisés"));
   }
 });
 
-// Endpoint pour uploader et parser le fichier Excel
-router.post('/v1/upload-excel', upload.single('file'), (req, res) => {
+// Fonction pour traiter les fichiers CSV
+const parseCSV = (filePath) => {
+  return new Promise((resolve, reject) => {
+    const results = [];
+    fs.createReadStream(filePath)
+      .pipe(csv()) // Utilisation de csv-parser
+      .on('data', (data) => results.push(data))
+      .on('end', () => resolve(results))
+      .on('error', (error) => reject(error));
+  });
+};
+
+// Endpoint pour uploader et parser le fichier Excel ou CSV
+router.post('/v1/upload-excel', upload.single('file'), async (req, res) => {
   try {
     console.log("Requête reçue !");
     console.log("Headers :", req.headers);
@@ -75,30 +93,40 @@ router.post('/v1/upload-excel', upload.single('file'), (req, res) => {
 
     if (!req.file) {
       console.log("Aucun fichier reçu!");
-      return res.status(400).json({ success: false, message: 'Aucun fichier n\'a été uploadé' });
+      return res.status(400).json({ success: false, message: "Aucun fichier n'a été uploadé" });
     }
 
-    // Lire le fichier Excel
-    const workbook = xlsx.readFile(req.file.path);
-    const sheetNameList = workbook.SheetNames;
-    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNameList[0]]);
+    const filePath = req.file.path;
+    const fileExt = path.extname(req.file.originalname).toLowerCase();
+    let data = [];
 
+    if (fileExt === ".csv") {
+      // Traitement du fichier CSV
+      data = await parseCSV(filePath);
+    } else {
+      // Traitement du fichier Excel
+      const workbook = xlsx.readFile(filePath);
+      const sheetNameList = workbook.SheetNames;
+      data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNameList[0]]);
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'Fichier traité avec succès',
+      message: "Fichier traité avec succès",
       data: data
     });
+
   } catch (error) {
-    console.error('Erreur lors du traitement du fichier:', error);
+    console.error("Erreur lors du traitement du fichier:", error);
     return res.status(500).json({
       success: false,
-      message: 'Une erreur est survenue lors du traitement du fichier'
+      message: "Une erreur est survenue lors du traitement du fichier"
     });
   }
 });
 
 module.exports = router;
+
 
 
 // holds all the allowed origins for cors access
