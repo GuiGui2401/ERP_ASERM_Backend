@@ -1,8 +1,8 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const xlsx = require("xlsx");
 const {
+  uploadProductCategory,
   createSingleProductCategory,
   getAllProductCategory,
   getSingleProductCategory,
@@ -13,13 +13,13 @@ const authorize = require("../../../../utils/authorize"); // Middleware d'authen
 
 const productCategoryRoutes = express.Router();
 
-// Configuration de Multer pour l'upload des fichiers
+// Configuration de Multer (Stockage temporaire des fichiers)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Dossier où stocker les fichiers
+    cb(null, "uploads/"); // 📁 Dossier temporaire
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // Générer un nom unique
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`); // 🔄 Nom unique du fichier
   },
 });
 
@@ -33,43 +33,19 @@ const upload = multer({
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error("Seuls les fichiers Excel ou CSV sont autorisés"));
+    cb(new Error("Seuls les fichiers Excel (.xls, .xlsx) ou CSV (.csv) sont autorisés"));
   },
 });
 
-// Endpoint pour uploader un fichier Excel/CSV et récupérer les données
+// Endpoint pour uploader un fichier Excel/CSV et importer les catégories
 productCategoryRoutes.post(
   "/v1/upload-excel",
-  authorize("createProductCategory"),
-  upload.single("file"),
-  async (req, res) => {
-    try {
-      console.log("Fichier reçu :", req.file);
-
-      if (!req.file) {
-        return res.status(400).json({ success: false, message: "Aucun fichier reçu" });
-      }
-
-      const workbook = xlsx.readFile(req.file.path);
-      const sheetNameList = workbook.SheetNames;
-      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNameList[0]]);
-
-      return res.status(200).json({
-        success: true,
-        message: "Fichier uploadé avec succès",
-        data: data,
-      });
-    } catch (error) {
-      console.error("Erreur lors du traitement du fichier :", error);
-      return res.status(500).json({
-        success: false,
-        message: "Erreur interne du serveur",
-      });
-    }
-  }
+  authorize("createProductCategory"), // Vérification des permissions
+  upload.single("file"), // Gestion de l'upload
+  uploadProductCategory // Utilisation du contrôleur amélioré
 );
 
-// CRUD des catégories de produits
+//  CRUD des catégories de produits
 productCategoryRoutes.post("/", authorize("createProductCategory"), createSingleProductCategory);
 productCategoryRoutes.get("/", authorize("viewProductCategory"), getAllProductCategory);
 productCategoryRoutes.get("/:id", authorize("viewProductCategory"), getSingleProductCategory);

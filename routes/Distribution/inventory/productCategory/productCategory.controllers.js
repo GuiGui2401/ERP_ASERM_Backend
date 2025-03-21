@@ -5,6 +5,42 @@ require("dotenv").config();
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST;
+const multer = require("multer");
+const xlsx = require("xlsx");
+
+const upload = multer({ dest: "uploads/" });
+
+const uploadProductCategory = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Aucun fichier reçu" });
+    }
+
+    // Lire le fichier Excel
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    // Insérer les données dans la base
+    const createdCategories = await prisma.product_category.createMany({
+      data: data.map((item) => ({ name: item.name })),
+      skipDuplicates: true,
+    });
+
+    // Log de l'action d'upload
+    await prisma.auditLog.create({
+      data: {
+        userId: Number(req.auth.sub),
+        action: 'UPLOAD_PRODUCT_CATEGORIES',
+        details: `Uploaded ${data.length} product categories via Excel file.`,
+      },
+    });
+
+    res.json({ message: "Fichier traité avec succès", data: createdCategories });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 const createSingleProductCategory = async (req, res) => {
   if (req.query.query === "deletemany") {
@@ -236,6 +272,7 @@ const deleteSingleProductCategory = async (req, res) => {
 };
 
 module.exports = {
+  uploadProductCategory,
   createSingleProductCategory,
   getAllProductCategory,
   getSingleProductCategory,

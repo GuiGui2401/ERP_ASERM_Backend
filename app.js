@@ -85,7 +85,7 @@ const parseCSV = (filePath) => {
 };
 
 // Endpoint pour uploader et parser le fichier Excel ou CSV
-router.post('/v1/upload-excel', upload.single('file'), async (req, res) => {
+router.post('/v1/product-category/upload-excel', upload.single('file'), async (req, res) => {
   try {
     console.log("Requête reçue !");
     console.log("Headers :", req.headers);
